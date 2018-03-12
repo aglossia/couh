@@ -13,9 +13,7 @@ using Microsoft.Win32;
 
 namespace couh
 {
-    using Index_Dic = Dictionary<int, Tuple<string, string>>;
-
-
+    using Index_Dic = Dictionary<int, Tuple<string, string, int>>;
 
     public partial class couh : Form
     {
@@ -26,15 +24,25 @@ namespace couh
         const int HIDE = 1;
         const int REDISPLAY = 2;
         
-        static char[] separator = {'='};
+        static char[] separator = {':'};
         string sep_str = new String(separator);
 
         Index_Dic hideDic = new Index_Dic();
         Index_Dic showList_withIndex = new Index_Dic();
 
+        Index_Dic ShowDic = new Index_Dic();
+
+        //Tuple<string, string, int> ShowDic = new Tuple<string,string,int>();
+
+        //IOrderedEnumerable<KeyValuePair<int,Tuple<string,string,int>>> ShowDic ;
+
+        Dictionary<string, int> preHideKey = new Dictionary<string,int>();
+
         //Dictionary<string, string> hideDic_selected = new Dictionary<string, string>();
         List<int> hideIndices = new List<int>();
-        List<string> preHideKey = new List<string>();
+        //List<string> preHideKey = new List<string>();
+
+
 
         func fc = new func();
 
@@ -42,15 +50,9 @@ namespace couh
         {
             InitializeComponent();
 
-            //fc.UninstallHiding_TEST("a");
-
-            //const string baseKeyName_x64 = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
-            //const string baseKeyName_x86 = @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall";
-
             string[] splitted;
-            //List<string> showList_DisplayName = new List<string>();
             List<string> showList_OutPut = new List<string>();
-            List<string> hideList = new List<string>();
+            //List<string> hideList = new List<string>();
             string readLine;
 
             /*
@@ -63,52 +65,50 @@ namespace couh
                 ToDictionary(s => s.Item1, s=> s.Item2);
             */
 
-            var uninstList_x64 =
-                fc.GetUninstallList_TEST(Constants.baseKeyName_x64)
-                .ToDictionary(s => new Tuple<string, int>(s.Item1, s.Item3), s => s.Item2);
+            Index_Dic uninstList_x64 =
+                fc.GetUninstallList(Constants.x64);
 
-            var uninstList_x86 =
-                fc.GetUninstallList_TEST(Constants.baseKeyName_x86)
-                .ToDictionary(s => new Tuple<string, int>( s.Item1, s.Item3 ), s => s.Item2 );
+            Index_Dic uninstList_x86 =
+                fc.GetUninstallList(Constants.x86);
 
-            var unionShowDic =
-                uninstList_x64.Union(uninstList_x86).
-                ToDictionary(s => s.Key, s => s.Value);
+            ShowDic =
+                uninstList_x64.Union(uninstList_x86)
+                .OrderBy(x => x.Value.Item2)
+                .ToDictionary(s => s.Key, s => s.Value);
             
 
 
- 
-
-            var unionShowDic_Sorted = unionShowDic.OrderBy(x => x.Value);
+//            var unionShowDic_Sorted = unionShowDic.OrderBy(x => x.Value);
             
-            int i = 0;
+            //int i = 0;
 
-            foreach (var subkey in unionShowDic_Sorted)
+            foreach (var subkey in ShowDic)
             {
-                showList_OutPut.Add(subkey.Key.Item1 + sep_str + subkey.Value);
-                showList_withIndex.Add(i, new Tuple<string,string>(subkey.Key.Item1,subkey.Value));
-                i++;
+                showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+                //showList_withIndex.Add(i, new Tuple<string, string, int>(subkey.Key.Item1,subkey.Value,subkey.Key.Item2));
+                //i++;
             }
 
-            showList_OutPut.Sort();
-
-            //ファイルを上書きし、Shift JISで書き込む
-            StreamWriter sw = new StreamWriter(
-            show_ini,
-            false,
-            System.Text.Encoding.GetEncoding("shift_jis"));
-
-            foreach (string line in showList_OutPut)
+            if (!File.Exists(show_ini))
             {
-                sw.WriteLine(line);
+                //couh_show.iniが存在しなかった場合作成
+                StreamWriter sw = new StreamWriter(
+                show_ini,
+                false,
+                System.Text.Encoding.GetEncoding("shift_jis"));
+
+                foreach (string line in showList_OutPut)
+                {
+                    sw.WriteLine(line);
+                }
+
+                sw.Close();
+
             }
 
-            sw.Close();
-
-
-            foreach (var line in unionShowDic_Sorted)
+            foreach (var line in ShowDic)
             {
-                lstShow.Items.Add(line.Value);
+                lstShow.Items.Add(line.Value.Item2);
             }
 
             // 非表示プログラム一覧ファイルが存在するか
@@ -123,16 +123,14 @@ namespace couh
                 {
                     // セパレータでサブキーと値の名前に分割し、非表示辞書に設定
                     splitted = readLine.Split(separator);
-                    //hideDic.Add(new Dictionary<string, string> {{splitted[1], splitted[0] }});
-                    hideDic.Add( index, new Tuple<string, string>(splitted[0], splitted[1]) );
-                    //hideDic_selected.Add(splitted[1], splitted[0]);
-                    preHideKey.Add(splitted[0]);
+                    hideDic.Add( index, new Tuple<string, string, int>(splitted[0], splitted[1], int.Parse(splitted[2]) ) );
+                    preHideKey.Add(splitted[0], int.Parse(splitted[2]));
                     index++;
                 }
 
                 sr.Close();
 
-                foreach(Tuple<string, string> name in hideDic.Values)
+                foreach(Tuple<string, string, int> name in hideDic.Values)
                 {
                     lstHide.Items.Add(name.Item2);
                 }
@@ -152,13 +150,14 @@ namespace couh
 
                 //preHideKey.Add(showList_withIndex[lstShow.SelectedIndices[i]].Item1);
 
-                hideDic.Add(hCount + i, new Tuple<string, string> (showList_withIndex[lstShow.SelectedIndices[i]].Item1,
-                    showList_withIndex[lstShow.SelectedIndices[i]].Item2));
+                hideDic.Add(hCount + i, new Tuple<string, string, int> (ShowDic[lstShow.SelectedIndices[i]].Item1,
+                    ShowDic[lstShow.SelectedIndices[i]].Item2, ShowDic[lstShow.SelectedIndices[i]].Item3));
 
-                showList_withIndex.Remove(lstShow.SelectedIndices[i]);
+                ShowDic.Remove(lstShow.SelectedIndices[i]);
             }
 
-            fc.RefreshDicIndex(ref showList_withIndex);
+            fc.RefreshDicIndex(ref ShowDic);
+            fc.RefreshDicIndex(ref hideDic);
 
             for (int i = 0; i < selectNum; i++)
             {
@@ -174,18 +173,18 @@ namespace couh
         private void btnToShow_Click(object sender, EventArgs e)
         {
             int selectNum = lstHide.SelectedIndices.Count;
-            int sCount = showList_withIndex.Count;
+            int sCount = ShowDic.Count;
 
             for (int i = 0; i < selectNum; i++)
             {
 
-                showList_withIndex.Add(sCount + i, new Tuple<string, string>(hideDic[lstHide.SelectedIndices[i]].Item1,
-                    hideDic[lstHide.SelectedIndices[i]].Item2));
+                ShowDic.Add(sCount + i, new Tuple<string, string, int>(hideDic[lstHide.SelectedIndices[i]].Item1,
+                    hideDic[lstHide.SelectedIndices[i]].Item2, hideDic[lstHide.SelectedIndices[i]].Item3));
 
                 hideDic.Remove(lstHide.SelectedIndices[i]);
             }
 
-            fc.RefreshDicIndex(ref showList_withIndex);
+            fc.RefreshDicIndex(ref ShowDic);
             fc.RefreshDicIndex(ref hideDic);
             
             for (int i = 0; i < selectNum; i++)
@@ -200,17 +199,19 @@ namespace couh
 
         private void btnApply_Click(object sender, EventArgs e)
         {
-            var applyDic = new Dictionary<string, int>();
+            var applyDic = new Dictionary<string, Tuple<int, int>>(); // {Key,(operation, bit)}
 
             List<string> showList_OutPut = new List<string>();
             List<string> hideList_OutPut = new List<string>();
 
-            var hideDic_Sorted = hideDic.OrderBy(x => x.Value);
-            //var hideDic_Sorted = showList_withIndex.OrderBy(x => x.Value);
-
-            foreach (var subkey in hideDic_Sorted)
+            foreach (var subkey in hideDic)
             {
-                hideList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2);
+                hideList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+            }
+
+            foreach (var subkey in ShowDic)
+            {
+                showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
             }
 
             StreamWriter sw = new StreamWriter(
@@ -230,11 +231,6 @@ namespace couh
             false,
             System.Text.Encoding.GetEncoding("shift_jis"));
 
-            foreach (KeyValuePair<int, Tuple<string, string>> s in showList_withIndex)
-            {
-                showList_OutPut.Add(s.Value.Item1 + sep_str + s.Value.Item2);
-            }
-            
             foreach (string line in showList_OutPut)
             {
                 sw2.WriteLine(line);
@@ -242,41 +238,29 @@ namespace couh
             
             sw2.Close();
 
-            StreamWriter sw3 = new StreamWriter(
-                        @"test.csv",
-                        false,
-                        System.Text.Encoding.GetEncoding("shift_jis"));
-
-            foreach (string line in showList_OutPut)
-            {
-                sw3.WriteLine(line);
-            }
-
-            sw3.Close();
-
             foreach (var hide in hideDic.Values)
             {
-                if (preHideKey.Contains(hide.Item1))
+                if (preHideKey.ContainsKey(hide.Item1))
                 {
-                    applyDic.Add(hide.Item1, KEEP);
+                    applyDic.Add(hide.Item1, new Tuple<int, int>(KEEP, hide.Item3));
                     preHideKey.Remove(hide.Item1);
                 }
                 else
                 {
-                    applyDic.Add(hide.Item1, HIDE);
+                    applyDic.Add(hide.Item1, new Tuple<int, int>(HIDE, hide.Item3));
                 }
             }
 
-            foreach (string reminder in preHideKey)
+            foreach (var reminder in preHideKey)
             {
-                applyDic.Add(reminder, REDISPLAY);
+                applyDic.Add(reminder.Key, new Tuple<int, int>(REDISPLAY, reminder.Value));
             }
 
             preHideKey.Clear();
 
-            foreach (var pre in hideDic.Values)
+            foreach (var pre in hideDic)
             {
-                preHideKey.Add(pre.Item1);
+                preHideKey.Add(pre.Value.Item1, pre.Value.Item3);
             }
 
             foreach (var s in applyDic)
@@ -285,7 +269,7 @@ namespace couh
                 */
                 string directorypath;
 
-                if (s.Key.Substring(4,2) == "64")
+                if (s.Value.Item2 == Constants.x64)
                 {
                     directorypath = "reg_test_64//" + s.Key;
                 }else
@@ -294,6 +278,12 @@ namespace couh
                 }
 
                 /********TEST******/
+
+                /********本番*****/
+
+                //レジストリパスを設定する
+
+                /********本番******/
 
                 Dictionary<string, string> refList = new Dictionary<string, string>(){
                     {"key_64_00.txt","64_00test"},
@@ -321,9 +311,9 @@ namespace couh
                 };
 
                 /********TEST******/                
-                /******TEST
+                /******
                 ******/
-                switch (s.Value)
+                switch (s.Value.Item1)
                 {
                     case KEEP:
                         Console.WriteLine("KEEP:{0}",s.Key);
@@ -359,34 +349,13 @@ namespace couh
             Console.WriteLine("==============");
             applyDic.Clear();
 
-            /*
-            foreach (string hideItem in lstHide.Items)
-            {
-                if (hideDic[1].(hideItem))
-                {
-                    applyDic.Add(hideItem, KEEP);
-                    hideDic[1].Remove(hideItem);
-                }
-                else
-                {
-                    applyDic.Add(hideItem, HIDE);
-                }
-            }
+            /********本番*******/
 
-            foreach (string reminder in hideDic[1].Values)
-            {
-                applyDic.Add(reminder, REDISPLAY);
-            }
+            //systemcompornentの設定を行う
 
-            foreach(KeyValuePair<string, int> a in applyDic){
-                MessageBox.Show(a.Key + ',' + a.Value);
-            }
-            
-            foreach (int i in hideIndices)
-            {
-                MessageBox.Show(showList_withIndex[i].Item2);
-            }
-            */
+            /********本番*******/
+
+
         }
 
         private void btnClose_Click(object sender, EventArgs e)

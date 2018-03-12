@@ -25,3 +25,12 @@ X:\sorce\新しいフォルダー\新しいフォルダー\couh\couh\obj\x64\Deb
 X:\sorce\新しいフォルダー\新しいフォルダー\couh\couh\obj\x64\Debug\couh.couh.resources
 X:\sorce\新しいフォルダー\新しいフォルダー\couh\couh\obj\x64\Debug\couh.Properties.Resources.resources
 X:\sorce\新しいフォルダー\新しいフォルダー\couh\couh\obj\x64\Debug\couh.csproj.GenerateResource.Cache
+E:\work\tl\CREATE\couh\couh\bin\x64\Debug\couh.exe.config
+E:\work\tl\CREATE\couh\couh\obj\x64\Debug\couh.exe
+E:\work\tl\CREATE\couh\couh\obj\x64\Debug\couh.pdb
+E:\work\tl\CREATE\couh\couh\bin\x64\Debug\couh.exe
+E:\work\tl\CREATE\couh\couh\bin\x64\Debug\couh.pdb
+E:\work\tl\CREATE\couh\couh\obj\x64\Debug\couh.csprojResolveAssemblyReference.cache
+E:\work\tl\CREATE\couh\couh\obj\x64\Debug\couh.couh.resources
+E:\work\tl\CREATE\couh\couh\obj\x64\Debug\couh.Properties.Resources.resources
+E:\work\tl\CREATE\couh\couh\obj\x64\Debug\couh.csproj.GenerateResource.Cache

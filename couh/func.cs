@@ -14,32 +14,31 @@ namespace couh
         public const string baseKeyName_x86 = @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall";
         public const int x64 = 0;
         public const int x86 = 1;
+        public static int g_Index = 0;
     }
 
     class func
     {
-        public List<Tuple<string, string, int>> GetUninstallList(string path)
+        public Dictionary<int, Tuple<string, string, int>> GetUninstallList(int bit)
         {
-            List<string> list64 = new List<string>();
-            //List<string> displaynameList64 = new List<string>();
-            //Dictionary<string,string> displaynameList64 = new Dictionary<string,string>();
-            var displaynameList64 = new List<Tuple<string, string, int>>();
+
+            string keyName = "";
+            List<string> regPath = new List<string>();
+            var regList = new Dictionary<int, Tuple<string, string, int>>();
             string displayname;
             string releasetype;
             int? syscom;
 
-            int xbit;
-
-            if (path == Constants.baseKeyName_x64)
+            if (bit == Constants.x64)
             {
-                xbit = Constants.x64;
+                keyName = Constants.baseKeyName_x64;
             }
             else
             {
-                xbit = Constants.x86;
+                keyName = Constants.baseKeyName_x86;
             }
 
-            RegistryKey regSubkey = Registry.LocalMachine.OpenSubKey(path, false);
+            RegistryKey regSubkey = Registry.LocalMachine.OpenSubKey(keyName, false);
 
             if (regSubkey == null) return null;
 
@@ -47,13 +46,13 @@ namespace couh
 
             foreach(string key in aryKeyName)
             {
-                list64.Add(path + "\\" + key);
+                regPath.Add(keyName + "\\" + key);
             }
 
             //foreach(string name in list64)
-            for (int i = 0; i < list64.Count; i++)
+            for (int i = 0; i < regPath.Count; i++)
             {
-                RegistryKey regValueName = Registry.LocalMachine.OpenSubKey(list64[i], false);
+                RegistryKey regValueName = Registry.LocalMachine.OpenSubKey(regPath[i], false);
                 if(regValueName == null) return null;
 
                 displayname = (string)regValueName.GetValue("DisplayName");
@@ -67,73 +66,49 @@ namespace couh
                     ( releasetype != "ServicePack" ) &&
                     ( releasetype != "Security Update" ) )
                 {
-                    displaynameList64.Add( new Tuple<string, string, int>( aryKeyName[i], displayname, xbit ) );
+                    regList.Add(Constants.g_Index, new Tuple<string, string, int>( aryKeyName[i], displayname, bit ) );
+                    Constants.g_Index++;
                 }
             }
-            return displaynameList64;
+            return regList;
         }
 
-        public void RefreshDicIndex(ref Dictionary<int, Tuple<string, string>> refDic)
+        public void RefreshDicIndex(ref Dictionary<int, Tuple<string, string, int>> refDic)
         {
             var aaa = refDic.OrderBy(x => x.Value.Item2);
             //refDic.Clear();
 
-            var tmp = new Dictionary<int, Tuple<string, string>>();
+            var tmp = new Dictionary<int, Tuple<string, string, int>>();
             int index = 0;
 
-            foreach(KeyValuePair<int, Tuple<string, string>> bbb in aaa)
+            foreach(KeyValuePair<int, Tuple<string, string, int>> bbb in aaa)
             {
                 //refDic.Add(bbb.Key, new Tuple<string, string>(bbb.Value.Item1,bbb.Value.Item2));
-                tmp.Add(index, new Tuple<string, string>(bbb.Value.Item1, bbb.Value.Item2));
+                tmp.Add(index, new Tuple<string, string, int>(bbb.Value.Item1, bbb.Value.Item2, bbb.Value.Item3));
                 index++;
             }
             refDic = tmp;
         }
 
-        public List<Tuple<string, string, int>> GetUninstallList_TEST(string path)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path">64bit、32bitのパス</param>
+        /// <returns>(string,string,int) = (Key,Value,64bit or 32bit)</returns>
+        //public List<Tuple<string, string, int>> GetUninstallList_TEST(string path)
+        public Dictionary<int, Tuple<string, string, int>> GetUninstallList_TEST(int bit)
         {
-            /*
-            const string testcsv = "test.csv";
-            string readLine;
-            char[] separator = {'='};
-            string[] splitted;
 
-            var displaynameList64 = new List<Tuple<string,string,int>>();
+            string folder = "";
 
-            // 非表示プログラム一覧ファイルが存在するか
-            if (File.Exists(testcsv))
+            var regList = new Dictionary<int, Tuple<string, string, int>>();
+
+            if (bit == Constants.x64)
             {
-                // 存在した場合１行ずつ読み込む
-                StreamReader sr = new StreamReader(
-                    testcsv,
-                    Encoding.GetEncoding("Shift_JIS"));
-                while( ( readLine = sr.ReadLine() ) != null )
-                {
-                    // セパレータでサブキーと値の名前に分割し、非表示辞書に設定
-                    splitted = readLine.Split(separator);
-                    //hideDic.Add(Int32.Parse(splitted[2]), new Tuple<string, string> (splitted[1], splitted[0] ));
-                    //hideDic_selected.Add(splitted[1], splitted[0]);
-                    displaynameList64.Add( new Tuple<string,string,int>( splitted[0], splitted[1], 0 ) );
-                }
-
-                sr.Close();
-            }
-
-            return displaynameList64;
-            */
-            int xbit;
-            string folder;
-
-            var regList = new List<Tuple<string, string, int>>();
-
-            if (path == Constants.baseKeyName_x64)
-            {
-                xbit = Constants.x64;
                 folder = "reg_test_64";
             }
             else
             {
-                xbit = Constants.x86;
                 folder = "reg_test_86";
             }
 
@@ -160,8 +135,10 @@ namespace couh
                     continue;
                 }
 
-                regList.Add(new Tuple<string, string, int>(f.Substring(12), readLine, xbit));
+                regList.Add(Constants.g_Index, new Tuple<string, string, int>(Path.GetFileName(f), readLine, bit));
 
+                //Constants.g_Index++;
+                Constants.g_Index++;
             }
             return regList;
 
