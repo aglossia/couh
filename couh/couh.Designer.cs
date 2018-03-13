@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(couh));
             this.lstShow = new System.Windows.Forms.ListBox();
             this.lstHide = new System.Windows.Forms.ListBox();
             this.btnToHide = new System.Windows.Forms.Button();
@@ -40,7 +41,7 @@
             // 
             this.lstShow.BackColor = System.Drawing.SystemColors.Window;
             this.lstShow.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lstShow.Font = new System.Drawing.Font("MeiryoKe_Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lstShow.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.lstShow.FormattingEnabled = true;
             this.lstShow.HorizontalScrollbar = true;
             this.lstShow.ItemHeight = 12;
@@ -55,7 +56,7 @@
             // 
             this.lstHide.BackColor = System.Drawing.SystemColors.Window;
             this.lstHide.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lstHide.Font = new System.Drawing.Font("MeiryoKe_Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lstHide.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.lstHide.FormattingEnabled = true;
             this.lstHide.HorizontalScrollbar = true;
             this.lstHide.ItemHeight = 12;
@@ -122,6 +123,7 @@
             this.Controls.Add(this.lstHide);
             this.Controls.Add(this.lstShow);
             this.Font = new System.Drawing.Font("MeiryoKe_Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "couh";
             this.Text = "couh";
             this.ResumeLayout(false);

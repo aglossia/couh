@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using System.IO;
+using System.Security;
+using System.Windows.Forms;
 
 namespace couh
 {
@@ -12,31 +14,34 @@ namespace couh
     {
         public const string baseKeyName_x64 = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
         public const string baseKeyName_x86 = @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall";
+        public const string systemComponent = @"SystemComponent";
+        public const string SJIS = "Shift_JIS";
         public const int x64 = 0;
         public const int x86 = 1;
         public static int g_Index = 0;
+
+        public static List<string> searchValueList = new List<string>(){ "DisplayName", "ReleaseType", "SystemComponent" };
+        public static List<string> ignoreList = new List<string>(){ "Hotfix", "Update", "ServicePack", "Security Update" };
+
+        public enum operation
+        {
+            KEEP,
+            HIDE,
+            REDISPLAY
+        }
     }
 
-    class func
+    class func :Form
     {
         public Dictionary<int, Tuple<string, string, int>> GetUninstallList(int bit)
         {
-
-            string keyName = "";
             List<string> regPath = new List<string>();
             var regList = new Dictionary<int, Tuple<string, string, int>>();
             string displayname;
             string releasetype;
             int? syscom;
 
-            if (bit == Constants.x64)
-            {
-                keyName = Constants.baseKeyName_x64;
-            }
-            else
-            {
-                keyName = Constants.baseKeyName_x86;
-            }
+            string keyName = (bit == Constants.x64) ? Constants.baseKeyName_x64 : Constants.baseKeyName_x86;
 
             RegistryKey regSubkey = Registry.LocalMachine.OpenSubKey(keyName, false);
 
@@ -49,22 +54,18 @@ namespace couh
                 regPath.Add(keyName + "\\" + key);
             }
 
-            //foreach(string name in list64)
             for (int i = 0; i < regPath.Count; i++)
             {
                 RegistryKey regValueName = Registry.LocalMachine.OpenSubKey(regPath[i], false);
                 if(regValueName == null) return null;
 
-                displayname = (string)regValueName.GetValue("DisplayName");
-                releasetype = (string)regValueName.GetValue("ReleaseType");
-                syscom = (int?)regValueName.GetValue("SystemComponent");
+                displayname = (string)regValueName.GetValue(Constants.searchValueList[0]);
+                releasetype = (string)regValueName.GetValue(Constants.searchValueList[1]);
+                syscom = (int?)regValueName.GetValue(Constants.searchValueList[2]);
 
-                if( ( displayname != null ) &&
-                    ( syscom != 1 ) && 
-                    ( releasetype != "Hotfix" ) && 
-                    ( releasetype != "Update" ) &&
-                    ( releasetype != "ServicePack" ) &&
-                    ( releasetype != "Security Update" ) )
+                if ( ( displayname != null ) &&
+                     ( syscom != 1 ) &&
+                     !Constants.ignoreList.Contains( releasetype ) )
                 {
                     regList.Add(Constants.g_Index, new Tuple<string, string, int>( aryKeyName[i], displayname, bit ) );
                     Constants.g_Index++;
@@ -75,88 +76,48 @@ namespace couh
 
         public void RefreshDicIndex(ref Dictionary<int, Tuple<string, string, int>> refDic)
         {
-            var aaa = refDic.OrderBy(x => x.Value.Item2);
-            //refDic.Clear();
+            var refDic_Sorted = refDic.OrderBy(x => x.Value.Item2);
 
             var tmp = new Dictionary<int, Tuple<string, string, int>>();
             int index = 0;
 
-            foreach(KeyValuePair<int, Tuple<string, string, int>> bbb in aaa)
+            foreach(KeyValuePair<int, Tuple<string, string, int>> element in refDic_Sorted)
             {
-                //refDic.Add(bbb.Key, new Tuple<string, string>(bbb.Value.Item1,bbb.Value.Item2));
-                tmp.Add(index, new Tuple<string, string, int>(bbb.Value.Item1, bbb.Value.Item2, bbb.Value.Item3));
+                tmp.Add(index, new Tuple<string, string, int>(element.Value.Item1, element.Value.Item2, element.Value.Item3));
                 index++;
             }
             refDic = tmp;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="path">64bit、32bitのパス</param>
-        /// <returns>(string,string,int) = (Key,Value,64bit or 32bit)</returns>
-        //public List<Tuple<string, string, int>> GetUninstallList_TEST(string path)
-        public Dictionary<int, Tuple<string, string, int>> GetUninstallList_TEST(int bit)
+        public bool UninstRegOperation(string regPath, int ope)
         {
-
-            string folder = "";
-
-            var regList = new Dictionary<int, Tuple<string, string, int>>();
-
-            if (bit == Constants.x64)
+            try
             {
-                folder = "reg_test_64";
-            }
-            else
-            {
-                folder = "reg_test_86";
-            }
+                RegistryKey regkey = Registry.LocalMachine.OpenSubKey(regPath, true);
 
-            string readLine = "";
-
-            string[] files = System.IO.Directory.GetFiles(
-                folder, "*", System.IO.SearchOption.AllDirectories);
-
-            foreach (var f in files)
-            {
-                if (File.Exists(f))
+                switch (ope)
                 {
-                    // 存在した場合１行ずつ読み込む
-                    StreamReader sr = new StreamReader(
-                        f,
-                        Encoding.GetEncoding("Shift_JIS"));
-
-                    readLine = sr.ReadLine();
-
-                    sr.Close();
+                    case (int)Constants.operation.HIDE:
+                        regkey.SetValue(Constants.systemComponent, 1, RegistryValueKind.DWord);
+                        break;
+                    case (int)Constants.operation.REDISPLAY:
+                        regkey.DeleteValue(Constants.systemComponent);
+                        break;
+                    default:
+                        // 非表示と表示の操作しかないため通常は入らない
+                        return false;
                 }
-                if (readLine == null)
-                {
-                    continue;
-                }
-
-                regList.Add(Constants.g_Index, new Tuple<string, string, int>(Path.GetFileName(f), readLine, bit));
-
-                //Constants.g_Index++;
-                Constants.g_Index++;
+                return true;
             }
-            return regList;
-
-        }
-
-        public void UninstallHiding(string hidekey)
-        {
-
-        }
-
-        public void UninstallHiding_TEST(string hidekey)
-        {
-            string[] files = System.IO.Directory.GetFiles(
-            @"reg_test_64", "*", System.IO.SearchOption.AllDirectories);
-            foreach (var i in files)
+            catch (SecurityException ex)
             {
-                Console.WriteLine(i);
+                MessageBox.Show(ex.Message + "\n管理者権限でプログラムを実行してください。");
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            return false;
         }
     }
 }

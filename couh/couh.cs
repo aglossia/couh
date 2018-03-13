@@ -18,31 +18,15 @@ namespace couh
     public partial class couh : Form
     {
         const string show_ini = @"couh_show.ini";
-        const string hide_ini = @"couh_hide.ini";
-        
-        const int KEEP = 0;
-        const int HIDE = 1;
-        const int REDISPLAY = 2;
-        
+        const string hide_ini = @"couh_hide.ini";   
         static char[] separator = {':'};
         string sep_str = new String(separator);
-
         Index_Dic hideDic = new Index_Dic();
         Index_Dic showList_withIndex = new Index_Dic();
-
         Index_Dic ShowDic = new Index_Dic();
-
-        //Tuple<string, string, int> ShowDic = new Tuple<string,string,int>();
-
-        //IOrderedEnumerable<KeyValuePair<int,Tuple<string,string,int>>> ShowDic ;
-
         Dictionary<string, int> preHideKey = new Dictionary<string,int>();
 
-        //Dictionary<string, string> hideDic_selected = new Dictionary<string, string>();
         List<int> hideIndices = new List<int>();
-        //List<string> preHideKey = new List<string>();
-
-
 
         func fc = new func();
 
@@ -52,18 +36,6 @@ namespace couh
 
             string[] splitted;
             List<string> showList_OutPut = new List<string>();
-            //List<string> hideList = new List<string>();
-            string readLine;
-
-            /*
-            var uninstList_x64 = 
-                fc.GetUninstallList(baseKeyName_x64).
-                ToDictionary(s => s.Item1, s=> s.Item2);
-
-            var uninstList_x86 = 
-                fc.GetUninstallList(baseKeyName_x86).
-                ToDictionary(s => s.Item1, s=> s.Item2);
-            */
 
             Index_Dic uninstList_x64 =
                 fc.GetUninstallList(Constants.x64);
@@ -76,34 +48,23 @@ namespace couh
                 .OrderBy(x => x.Value.Item2)
                 .ToDictionary(s => s.Key, s => s.Value);
             
-
-
-//            var unionShowDic_Sorted = unionShowDic.OrderBy(x => x.Value);
-            
-            //int i = 0;
+            fc.RefreshDicIndex(ref ShowDic);
 
             foreach (var subkey in ShowDic)
             {
                 showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
-                //showList_withIndex.Add(i, new Tuple<string, string, int>(subkey.Key.Item1,subkey.Value,subkey.Key.Item2));
-                //i++;
             }
 
             if (!File.Exists(show_ini))
             {
                 //couh_show.iniが存在しなかった場合作成
-                StreamWriter sw = new StreamWriter(
-                show_ini,
-                false,
-                System.Text.Encoding.GetEncoding("shift_jis"));
+                StreamWriter sw = new StreamWriter( show_ini, false, Encoding.GetEncoding(Constants.SJIS));
 
                 foreach (string line in showList_OutPut)
                 {
                     sw.WriteLine(line);
                 }
-
                 sw.Close();
-
             }
 
             foreach (var line in ShowDic)
@@ -116,9 +77,8 @@ namespace couh
             {
                 int index = 0;
                 // 存在した場合１行ずつ読み込む
-                StreamReader sr = new StreamReader(
-                    hide_ini,
-                    Encoding.GetEncoding("Shift_JIS"));
+                StreamReader sr = new StreamReader( hide_ini, Encoding.GetEncoding(Constants.SJIS));
+                string readLine;
                 while( ( readLine = sr.ReadLine() ) != null )
                 {
                     // セパレータでサブキーと値の名前に分割し、非表示辞書に設定
@@ -134,8 +94,6 @@ namespace couh
                 {
                     lstHide.Items.Add(name.Item2);
                 }
-
-                //lstHide.Sorted = true;
             }
         }
 
@@ -146,10 +104,6 @@ namespace couh
 
             for (int i = 0; i < selectNum; i++)
             {
-                //hideIndices.Add(lstShow.SelectedIndices[i]);
-
-                //preHideKey.Add(showList_withIndex[lstShow.SelectedIndices[i]].Item1);
-
                 hideDic.Add(hCount + i, new Tuple<string, string, int> (ShowDic[lstShow.SelectedIndices[i]].Item1,
                     ShowDic[lstShow.SelectedIndices[i]].Item2, ShowDic[lstShow.SelectedIndices[i]].Item3));
 
@@ -166,7 +120,6 @@ namespace couh
 
                 lstHide.Sorted = true;
                 lstShow.Sorted = true;
-                
             }
         }
 
@@ -177,7 +130,6 @@ namespace couh
 
             for (int i = 0; i < selectNum; i++)
             {
-
                 ShowDic.Add(sCount + i, new Tuple<string, string, int>(hideDic[lstHide.SelectedIndices[i]].Item1,
                     hideDic[lstHide.SelectedIndices[i]].Item2, hideDic[lstHide.SelectedIndices[i]].Item3));
 
@@ -197,64 +149,80 @@ namespace couh
             }
         }
 
+        /// <summary>
+        /// Applyボタンクリック
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnApply_Click(object sender, EventArgs e)
         {
-            var applyDic = new Dictionary<string, Tuple<int, int>>(); // {Key,(operation, bit)}
-
-            List<string> showList_OutPut = new List<string>();
-            List<string> hideList_OutPut = new List<string>();
-
-            foreach (var subkey in hideDic)
-            {
-                hideList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
-            }
-
-            foreach (var subkey in ShowDic)
-            {
-                showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
-            }
-
-            StreamWriter sw = new StreamWriter(
-            hide_ini,
-            false,
-            System.Text.Encoding.GetEncoding("shift_jis"));
-
-            foreach (string line in hideList_OutPut)
-            {
-                sw.WriteLine(line);
-            }
-
-            sw.Close();
-
-            StreamWriter sw2 = new StreamWriter(
-            show_ini,
-            false,
-            System.Text.Encoding.GetEncoding("shift_jis"));
-
-            foreach (string line in showList_OutPut)
-            {
-                sw2.WriteLine(line);
-            }
-            
-            sw2.Close();
+            // applyするキー情報を保持する辞書
+            // {Key,(operation, bit)}
+            var applyDic = new Dictionary<string, Tuple<int, int>>();
 
             foreach (var hide in hideDic.Values)
             {
                 if (preHideKey.ContainsKey(hide.Item1))
                 {
-                    applyDic.Add(hide.Item1, new Tuple<int, int>(KEEP, hide.Item3));
+                    applyDic.Add(hide.Item1, new Tuple<int, int>((int)Constants.operation.KEEP, hide.Item3));
                     preHideKey.Remove(hide.Item1);
                 }
                 else
                 {
-                    applyDic.Add(hide.Item1, new Tuple<int, int>(HIDE, hide.Item3));
+                    applyDic.Add(hide.Item1, new Tuple<int, int>((int)Constants.operation.HIDE, hide.Item3));
                 }
             }
 
             foreach (var reminder in preHideKey)
             {
-                applyDic.Add(reminder.Key, new Tuple<int, int>(REDISPLAY, reminder.Value));
+                applyDic.Add(reminder.Key, new Tuple<int, int>((int)Constants.operation.REDISPLAY, reminder.Value));
             }
+
+
+
+            foreach (var ap in applyDic)
+            {
+                string regPath = (ap.Value.Item2 == Constants.x64) ? 
+                    Constants.baseKeyName_x64 + "\\" + ap.Key :
+                    Constants.baseKeyName_x86 + "\\" + ap.Key;
+
+                switch (ap.Value.Item1)
+                {
+                    case (int)Constants.operation.KEEP:
+
+                        Console.WriteLine("KEEP:{0}",ap.Key);
+
+                        break;
+                    case (int)Constants.operation.HIDE:
+
+                        Console.WriteLine("HIDE:{0}",ap.Key);
+
+                        if (!fc.UninstRegOperation(regPath, (int)Constants.operation.HIDE))
+                        {
+                            applyDic.Clear();
+                            return;
+                        }
+
+                        break;
+                    case (int)Constants.operation.REDISPLAY:
+
+                        Console.WriteLine("REDISPLAY:{0}",ap.Key);
+
+                        if (!fc.UninstRegOperation(regPath, (int)Constants.operation.REDISPLAY))
+                        {
+                            applyDic.Clear();
+                            return;
+                        }
+
+                        break;
+                    default:
+                        break;
+                }  
+            }
+            Console.WriteLine("==============");
+
+            //正常にレジストリ書き換え完了後、初期化を行い、各帳票を出力する
 
             preHideKey.Clear();
 
@@ -263,98 +231,42 @@ namespace couh
                 preHideKey.Add(pre.Value.Item1, pre.Value.Item3);
             }
 
-            foreach (var s in applyDic)
-            {
-                /***************TEST
-                */
-                string directorypath;
-
-                if (s.Value.Item2 == Constants.x64)
-                {
-                    directorypath = "reg_test_64//" + s.Key;
-                }else
-                {
-                    directorypath = "reg_test_86//" + s.Key;
-                }
-
-                /********TEST******/
-
-                /********本番*****/
-
-                //レジストリパスを設定する
-
-                /********本番******/
-
-                Dictionary<string, string> refList = new Dictionary<string, string>(){
-                    {"key_64_00.txt","64_00test"},
-                    {"key_64_01.txt","64_01test"},
-                    {"key_64_02.txt","64_02test"},
-                    {"key_64_03.txt","64_03test"},
-                    {"key_64_04.txt","64_04test"},
-                    {"key_64_05.txt","64_05test"},
-                    {"key_64_06.txt","64_06test"},
-                    {"key_64_07.txt","64_07test"},
-                    {"key_64_08.txt","64_08test"},
-                    {"key_64_09.txt","64_09test"},
-                    {"key_64_10.txt","64_10test"},
-                    {"key_86_00.txt","86_00test"},
-                    {"key_86_01.txt","86_01test"},
-                    {"key_86_02.txt","86_02test"},
-                    {"key_86_03.txt","86_03test"},
-                    {"key_86_04.txt","86_04test"},
-                    {"key_86_05.txt","86_05test"},
-                    {"key_86_06.txt","86_06test"},
-                    {"key_86_07.txt","86_07test"},
-                    {"key_86_08.txt","86_08test"},
-                    {"key_86_09.txt","86_09test"},
-                    {"key_86_10.txt","86_10test"}
-                };
-
-                /********TEST******/                
-                /******
-                ******/
-                switch (s.Value.Item1)
-                {
-                    case KEEP:
-                        Console.WriteLine("KEEP:{0}",s.Key);
-
-                        break;
-                    case HIDE:
-                        Console.WriteLine("HIDE:{0}",s.Key);
-                        StreamWriter f2 = new StreamWriter(
-                                    directorypath,
-                                    false,
-                                    System.Text.Encoding.GetEncoding("shift_jis"));
-
-                        //f2.WriteLine(0x1a);
-
-                        f2.Close();
-                        break;
-                    case REDISPLAY:
-                        Console.WriteLine("REDISPLAY:{0}",s.Key);
-                        StreamWriter f1 = new StreamWriter(
-                                    directorypath,
-                                    false,
-                                    System.Text.Encoding.GetEncoding("shift_jis"));
-
-                        f1.WriteLine(refList[s.Key]);
-
-                        f1.Close();
-                        break;
-                    default:
-                        break;
-                }
-                
-            }
-            Console.WriteLine("==============");
             applyDic.Clear();
 
-            /********本番*******/
+            List<string> showList_OutPut = new List<string>();
+            List<string> hideList_OutPut = new List<string>();
 
-            //systemcompornentの設定を行う
+            // 非表示プログラム帳票出力用リスト作成
+            foreach (var subkey in hideDic)
+            {
+                hideList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+            }
 
-            /********本番*******/
+            // 表示プログラム帳票出力用リスト作成
+            foreach (var subkey in ShowDic)
+            {
+                showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+            }
 
+            // 非表示帳票出力
+            StreamWriter hf = new StreamWriter( hide_ini, false, Encoding.GetEncoding(Constants.SJIS));
+
+            foreach (string line in hideList_OutPut)
+            {
+                hf.WriteLine(line);
+            }
+            hf.Close();
+
+            // 表示帳票出力
+            StreamWriter sf = new StreamWriter(show_ini, false, Encoding.GetEncoding(Constants.SJIS));
+
+            foreach (string line in showList_OutPut)
+            {
+                sf.WriteLine(line);
+            }
+            sf.Close();
+
+            MessageBox.Show("設定完了");
 
         }
 
@@ -369,7 +281,7 @@ namespace couh
             {
                 if (lstShow.SelectedIndex != -1)
                 {
-                    MessageBox.Show(showList_withIndex[lstShow.SelectedIndex].Item1);
+                    MessageBox.Show("Key: " + ShowDic[lstShow.SelectedIndex].Item1);
                 }
                 
             }
@@ -386,7 +298,7 @@ namespace couh
             {
                 if (lstHide.SelectedIndex != -1)
                 {
-                    MessageBox.Show(hideDic[lstHide.SelectedIndex].Item1);
+                    MessageBox.Show("Key: " + hideDic[lstHide.SelectedIndex].Item1);
                 }
                 
             }
@@ -394,7 +306,6 @@ namespace couh
             {
                 MessageBox.Show(ex.Message);
             }
-            
         }
     }
 }

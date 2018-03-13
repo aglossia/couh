@@ -1,0 +1,8 @@
+E:\work\tl\CREATE\couh\couh\bin\x64\Release\couh.exe.config
+E:\work\tl\CREATE\couh\couh\bin\x64\Release\couh.exe
+E:\work\tl\CREATE\couh\couh\bin\x64\Release\couh.pdb
+E:\work\tl\CREATE\couh\couh\obj\x64\Release\couh.couh.resources
+E:\work\tl\CREATE\couh\couh\obj\x64\Release\couh.Properties.Resources.resources
+E:\work\tl\CREATE\couh\couh\obj\x64\Release\couh.csproj.GenerateResource.Cache
+E:\work\tl\CREATE\couh\couh\obj\x64\Release\couh.exe
+E:\work\tl\CREATE\couh\couh\obj\x64\Release\couh.pdb

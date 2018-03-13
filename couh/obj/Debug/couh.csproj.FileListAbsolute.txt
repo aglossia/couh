@@ -7,3 +7,12 @@ E:\on_work\pra\couh\couh\bin\Debug\couh.exe
 E:\on_work\pra\couh\couh\bin\Debug\couh.pdb
 E:\on_work\pra\couh\couh\obj\Debug\couh.exe
 E:\on_work\pra\couh\couh\obj\Debug\couh.pdb
+E:\work\tl\CREATE\couh\couh\bin\Debug\couh.exe.config
+E:\work\tl\CREATE\couh\couh\obj\Debug\couh.exe
+E:\work\tl\CREATE\couh\couh\obj\Debug\couh.pdb
+E:\work\tl\CREATE\couh\couh\bin\Debug\couh.exe
+E:\work\tl\CREATE\couh\couh\bin\Debug\couh.pdb
+E:\work\tl\CREATE\couh\couh\obj\Debug\couh.csprojResolveAssemblyReference.cache
+E:\work\tl\CREATE\couh\couh\obj\Debug\couh.couh.resources
+E:\work\tl\CREATE\couh\couh\obj\Debug\couh.Properties.Resources.resources
+E:\work\tl\CREATE\couh\couh\obj\Debug\couh.csproj.GenerateResource.Cache
