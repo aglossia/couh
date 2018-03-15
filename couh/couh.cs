@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using Microsoft.Win32;
-//using static couh.Constants;
+//using static couh.Constants; C# 5では使えない
 
 namespace couh
 {
@@ -34,30 +34,35 @@ namespace couh
         {
             InitializeComponent();
 
+            // iniファイルから読み込んだ各要素（key,value,bit）
             string[] splitted;
+            // show.ini出力用
             List<string> showList_OutPut = new List<string>();
 
-            Index_Dic uninstList_x64 =
-                fc.GetUninstallList(Constants.x64);
+            // x64アンインストール情報取得
+            Index_Dic uninstList_x64 = fc.GetUninstallList(Constants.x64);
+            // x86アンインストール情報取得
+            Index_Dic uninstList_x86 = fc.GetUninstallList(Constants.x86);
 
-            Index_Dic uninstList_x86 =
-                fc.GetUninstallList(Constants.x86);
-
+            // アンインストール情報をマージしてソート
             ShowDic =
                 uninstList_x64.Union(uninstList_x86)
                 .OrderBy(x => x.Value.Item2)
                 .ToDictionary(s => s.Key, s => s.Value);
             
+            // インデックス振り直し
             fc.RefreshDicIndex(ref ShowDic);
 
-            foreach (var subkey in ShowDic)
-            {
-                showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
-            }
 
+            //couh_show.iniが存在しなかった場合作成
             if (!File.Exists(show_ini))
             {
-                //couh_show.iniが存在しなかった場合作成
+                // show.ini出力用に整形
+                foreach (var subkey in ShowDic)
+                {
+                    showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+                }
+
                 StreamWriter sw = new StreamWriter( show_ini, false, Encoding.GetEncoding(Constants.SJIS));
 
                 foreach (string line in showList_OutPut)
@@ -67,6 +72,7 @@ namespace couh
                 sw.Close();
             }
 
+            // 表示情報をリストに表示
             foreach (var line in ShowDic)
             {
                 lstShow.Items.Add(line.Value.Item2);
@@ -90,6 +96,7 @@ namespace couh
 
                 sr.Close();
 
+                // 非表示リストを表示
                 foreach(Tuple<string, string, int> name in hideDic.Values)
                 {
                     lstHide.Items.Add(name.Item2);
@@ -97,24 +104,35 @@ namespace couh
             }
         }
 
+        /// <summary>
+        /// 非表示リストに追加
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnToHide_Click(object sender, EventArgs e)
         {
+            // 非表示リストに追加する項目数
             int selectNum = lstShow.SelectedIndices.Count;
+            // 既に非表示リストに入っている項目数
             int hCount = hideDic.Count;
 
             for (int i = 0; i < selectNum; i++)
             {
-                hideDic.Add(hCount + i, new Tuple<string, string, int> (ShowDic[lstShow.SelectedIndices[i]].Item1,
-                    ShowDic[lstShow.SelectedIndices[i]].Item2, ShowDic[lstShow.SelectedIndices[i]].Item3));
-
+                // 非表示辞書に後ろから追加
+                hideDic.Add(hCount + i,
+                    new Tuple<string, string, int> (ShowDic[lstShow.SelectedIndices[i]].Item1,
+                                                    ShowDic[lstShow.SelectedIndices[i]].Item2, 
+                                                    ShowDic[lstShow.SelectedIndices[i]].Item3));
+                // 表示辞書から削除
                 ShowDic.Remove(lstShow.SelectedIndices[i]);
             }
-
+            // インデックスを振り直し
             fc.RefreshDicIndex(ref ShowDic);
             fc.RefreshDicIndex(ref hideDic);
 
             for (int i = 0; i < selectNum; i++)
             {
+                // （非）表示リストの更新
                 lstHide.Items.Add(lstShow.SelectedItems[0]);
                 lstShow.Items.RemoveAt(lstShow.SelectedIndices[0]);
 
@@ -122,7 +140,11 @@ namespace couh
                 lstShow.Sorted = true;
             }
         }
-
+        /// <summary>
+        /// 表示リストに追加
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnToShow_Click(object sender, EventArgs e)
         {
             int selectNum = lstHide.SelectedIndices.Count;
@@ -157,60 +179,75 @@ namespace couh
         /// <param name="e"></param>
         private void btnApply_Click(object sender, EventArgs e)
         {
+            DialogResult result = MessageBox.Show(
+                "非表示にしますか？",
+                "確認",
+                MessageBoxButtons.OKCancel,
+                MessageBoxIcon.Exclamation,
+                MessageBoxDefaultButton.Button1);
+
+            if (result == DialogResult.Cancel) return;
+
             // applyするキー情報を保持する辞書
             // {Key,(operation, bit)}
             var applyDic = new Dictionary<string, Tuple<int, int>>();
 
+            // ハイド情報のそれぞれに操作情報をつけてapplyに設定
             foreach (var hide in hideDic.Values)
             {
                 if (preHideKey.ContainsKey(hide.Item1))
                 {
+                    // 起動時 or apply後のハイド情報に今のハイド情報があれば操作しない 
                     applyDic.Add(hide.Item1, new Tuple<int, int>((int)Constants.operation.KEEP, hide.Item3));
                     preHideKey.Remove(hide.Item1);
                 }
                 else
                 {
+                    // なければ新参なので非表示する
                     applyDic.Add(hide.Item1, new Tuple<int, int>((int)Constants.operation.HIDE, hide.Item3));
                 }
             }
 
             foreach (var reminder in preHideKey)
             {
+                // KEEPでもHIDEでもないプレハイドに残ったものは再表示する
                 applyDic.Add(reminder.Key, new Tuple<int, int>((int)Constants.operation.REDISPLAY, reminder.Value));
             }
 
-
-
             foreach (var ap in applyDic)
             {
+                // レジストリパスを設定
                 string regPath = (ap.Value.Item2 == Constants.x64) ? 
                     Constants.baseKeyName_x64 + "\\" + ap.Key :
                     Constants.baseKeyName_x86 + "\\" + ap.Key;
 
+                // applyの持つ操作情報に依って実行
                 switch (ap.Value.Item1)
                 {
                     case (int)Constants.operation.KEEP:
-
+                        // KEEPは何もしない
                         Console.WriteLine("KEEP:{0}",ap.Key);
 
                         break;
                     case (int)Constants.operation.HIDE:
-
+                        // HIDEは非表示にする
                         Console.WriteLine("HIDE:{0}",ap.Key);
 
                         if (!fc.UninstRegOperation(regPath, (int)Constants.operation.HIDE))
-                        {
+                        {   
+                            // レジストリ操作でエラーがあった場合はapplyを削除する
                             applyDic.Clear();
                             return;
                         }
 
                         break;
                     case (int)Constants.operation.REDISPLAY:
-
+                        // 再表示する
                         Console.WriteLine("REDISPLAY:{0}",ap.Key);
 
                         if (!fc.UninstRegOperation(regPath, (int)Constants.operation.REDISPLAY))
                         {
+                            // レジストリ操作でエラーがあった場合はapplyを削除する
                             applyDic.Clear();
                             return;
                         }
@@ -222,7 +259,7 @@ namespace couh
             }
             Console.WriteLine("==============");
 
-            //正常にレジストリ書き換え完了後、初期化を行い、各帳票を出力する
+            // 正常にレジストリ書き換え完了後、初期化を行い、各帳票を出力する
 
             preHideKey.Clear();
 

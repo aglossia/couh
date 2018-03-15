@@ -31,7 +31,7 @@ namespace couh
         }
     }
 
-    class func :Form
+    class func //:Form
     {
         public Dictionary<int, Tuple<string, string, int>> GetUninstallList(int bit)
         {
