@@ -29,43 +29,20 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(couh));
-            this.lstShow = new System.Windows.Forms.ListBox();
-            this.lstHide = new System.Windows.Forms.ListBox();
             this.btnToHide = new System.Windows.Forms.Button();
             this.btnToShow = new System.Windows.Forms.Button();
             this.btnApply = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
+            this.dgvShow = new System.Windows.Forms.DataGridView();
+            this.columnShowName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.columnShowDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dgvHide = new System.Windows.Forms.DataGridView();
+            this.columnHideName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.columnHideDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.labelVer = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvShow)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvHide)).BeginInit();
             this.SuspendLayout();
-            // 
-            // lstShow
-            // 
-            this.lstShow.BackColor = System.Drawing.SystemColors.Window;
-            this.lstShow.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lstShow.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.lstShow.FormattingEnabled = true;
-            this.lstShow.HorizontalScrollbar = true;
-            this.lstShow.ItemHeight = 12;
-            this.lstShow.Location = new System.Drawing.Point(12, 12);
-            this.lstShow.Name = "lstShow";
-            this.lstShow.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.lstShow.Size = new System.Drawing.Size(462, 194);
-            this.lstShow.TabIndex = 0;
-            this.lstShow.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstShow_MouseDoubleClick);
-            // 
-            // lstHide
-            // 
-            this.lstHide.BackColor = System.Drawing.SystemColors.Window;
-            this.lstHide.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lstHide.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.lstHide.FormattingEnabled = true;
-            this.lstHide.HorizontalScrollbar = true;
-            this.lstHide.ItemHeight = 12;
-            this.lstHide.Location = new System.Drawing.Point(12, 259);
-            this.lstHide.Name = "lstHide";
-            this.lstHide.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.lstHide.Size = new System.Drawing.Size(462, 86);
-            this.lstHide.TabIndex = 1;
-            this.lstHide.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstHide_MouseDoubleClick);
             // 
             // btnToHide
             // 
@@ -81,7 +58,7 @@
             // btnToShow
             // 
             this.btnToShow.Font = new System.Drawing.Font("MS UI Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.btnToShow.Location = new System.Drawing.Point(314, 212);
+            this.btnToShow.Location = new System.Drawing.Point(534, 214);
             this.btnToShow.Name = "btnToShow";
             this.btnToShow.Size = new System.Drawing.Size(109, 39);
             this.btnToShow.TabIndex = 3;
@@ -92,7 +69,7 @@
             // btnApply
             // 
             this.btnApply.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.btnApply.Location = new System.Drawing.Point(80, 353);
+            this.btnApply.Location = new System.Drawing.Point(281, 383);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(75, 23);
             this.btnApply.TabIndex = 4;
@@ -103,7 +80,7 @@
             // btnClose
             // 
             this.btnClose.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.btnClose.Location = new System.Drawing.Point(314, 353);
+            this.btnClose.Location = new System.Drawing.Point(405, 383);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(75, 23);
             this.btnClose.TabIndex = 5;
@@ -111,33 +88,119 @@
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // dgvShow
+            // 
+            this.dgvShow.AllowUserToAddRows = false;
+            this.dgvShow.AllowUserToDeleteRows = false;
+            this.dgvShow.AllowUserToResizeColumns = false;
+            this.dgvShow.AllowUserToResizeRows = false;
+            this.dgvShow.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            this.dgvShow.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvShow.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.columnShowName,
+            this.columnShowDate});
+            this.dgvShow.Location = new System.Drawing.Point(12, 12);
+            this.dgvShow.Name = "dgvShow";
+            this.dgvShow.ReadOnly = true;
+            this.dgvShow.RowHeadersVisible = false;
+            this.dgvShow.RowHeadersWidth = 25;
+            this.dgvShow.RowTemplate.Height = 21;
+            this.dgvShow.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvShow.Size = new System.Drawing.Size(731, 194);
+            this.dgvShow.TabIndex = 7;
+            this.dgvShow.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvShow_CellDoubleClick);
+            this.dgvShow.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvShow_ColumnHeaderMouseClick);
+            // 
+            // columnShowName
+            // 
+            this.columnShowName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.columnShowName.HeaderText = "Name";
+            this.columnShowName.Name = "columnShowName";
+            this.columnShowName.ReadOnly = true;
+            this.columnShowName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // columnShowDate
+            // 
+            this.columnShowDate.HeaderText = "Date";
+            this.columnShowDate.Name = "columnShowDate";
+            this.columnShowDate.ReadOnly = true;
+            // 
+            // dgvHide
+            // 
+            this.dgvHide.AllowUserToAddRows = false;
+            this.dgvHide.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvHide.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.columnHideName,
+            this.columnHideDate});
+            this.dgvHide.Location = new System.Drawing.Point(12, 259);
+            this.dgvHide.Name = "dgvHide";
+            this.dgvHide.ReadOnly = true;
+            this.dgvHide.RowHeadersVisible = false;
+            this.dgvHide.RowHeadersWidth = 25;
+            this.dgvHide.RowTemplate.Height = 21;
+            this.dgvHide.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvHide.Size = new System.Drawing.Size(731, 118);
+            this.dgvHide.TabIndex = 8;
+            // 
+            // columnHideName
+            // 
+            this.columnHideName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.columnHideName.HeaderText = "Name";
+            this.columnHideName.Name = "columnHideName";
+            this.columnHideName.ReadOnly = true;
+            // 
+            // columnHideDate
+            // 
+            this.columnHideDate.HeaderText = "Date";
+            this.columnHideDate.Name = "columnHideDate";
+            this.columnHideDate.ReadOnly = true;
+            // 
+            // labelVer
+            // 
+            this.labelVer.AutoSize = true;
+            this.labelVer.Location = new System.Drawing.Point(698, 394);
+            this.labelVer.Name = "labelVer";
+            this.labelVer.Size = new System.Drawing.Size(47, 12);
+            this.labelVer.TabIndex = 9;
+            this.labelVer.Text = "Ver -.-";
+            // 
             // couh
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(486, 386);
+            this.ClientSize = new System.Drawing.Size(755, 418);
+            this.Controls.Add(this.labelVer);
+            this.Controls.Add(this.dgvHide);
+            this.Controls.Add(this.dgvShow);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnApply);
             this.Controls.Add(this.btnToShow);
             this.Controls.Add(this.btnToHide);
-            this.Controls.Add(this.lstHide);
-            this.Controls.Add(this.lstShow);
             this.Font = new System.Drawing.Font("MeiryoKe_Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "couh";
             this.Text = "couh";
+            this.Shown += new System.EventHandler(this.couh_Shown);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvShow)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvHide)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
-        private System.Windows.Forms.ListBox lstShow;
-        private System.Windows.Forms.ListBox lstHide;
         private System.Windows.Forms.Button btnToHide;
         private System.Windows.Forms.Button btnToShow;
         private System.Windows.Forms.Button btnApply;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.DataGridView dgvShow;
+        private System.Windows.Forms.DataGridView dgvHide;
+        private System.Windows.Forms.DataGridViewTextBoxColumn columnHideName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn columnHideDate;
+        private System.Windows.Forms.Label labelVer;
+        private System.Windows.Forms.DataGridViewTextBoxColumn columnShowName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn columnShowDate;
     }
 }
 

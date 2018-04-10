@@ -13,7 +13,8 @@ using Microsoft.Win32;
 
 namespace couh
 {
-    using Index_Dic = Dictionary<int, Tuple<string, string, int>>;
+    // <index,Tuple<key, displayname, bit, update>>
+    using Index_Dic = Dictionary<int, regElement>;
 
     public partial class couh : Form
     {
@@ -26,18 +27,41 @@ namespace couh
         Index_Dic ShowDic = new Index_Dic();
         Dictionary<string, int> preHideKey = new Dictionary<string,int>();
 
+        ListSortDirection sortDirection = ListSortDirection.Ascending;
+        Tuple<ListSortDirection, int> showSortDirection = 
+            new Tuple<ListSortDirection,int>(ListSortDirection.Ascending, Constants.columnName);
+        Tuple<ListSortDirection, int> hideSortDirection = 
+            new Tuple<ListSortDirection,int>(ListSortDirection.Ascending, Constants.columnName);
+
         List<int> hideIndices = new List<int>();
 
         func fc = new func();
+        reg regcon = new reg();
+
+        private void couh_Shown(object sender, EventArgs e)
+        {
+            dgvShow.CurrentCell = null;
+            dgvHide.CurrentCell = null;
+            System.Reflection.Assembly     assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            System.Reflection.AssemblyName asmName  = assembly.GetName();
+            System.Version                 version  = asmName.Version;
+ 
+            labelVer.Text = "Ver " + version.Major + "." + version.MinorRevision;
+        }
 
         public couh()
         {
             InitializeComponent();
 
+            foreach (DataGridViewColumn c in dgvShow.Columns) c.SortMode = DataGridViewColumnSortMode.Automatic;
+
             // iniファイルから読み込んだ各要素（key,value,bit）
             string[] splitted;
             // show.ini出力用
             List<string> showList_OutPut = new List<string>();
+            
+            regcon.GetSubKeyLastUpdate(ref Constants.listLastUpdate, Constants.baseKeyName_x64);
+            regcon.GetSubKeyLastUpdate(ref Constants.listLastUpdate, Constants.baseKeyName_x86);
 
             // x64アンインストール情報取得
             Index_Dic uninstList_x64 = fc.GetUninstallList(Constants.x64);
@@ -47,12 +71,11 @@ namespace couh
             // アンインストール情報をマージしてソート
             ShowDic =
                 uninstList_x64.Union(uninstList_x86)
-                .OrderBy(x => x.Value.Item2)
+                .OrderBy(x => x.Value.displayName)
                 .ToDictionary(s => s.Key, s => s.Value);
             
             // インデックス振り直し
-            fc.RefreshDicIndex(ref ShowDic);
-
+            fc.RefreshDicIndex(ref ShowDic, Constants.columnName);
 
             //couh_show.iniが存在しなかった場合作成
             if (!File.Exists(show_ini))
@@ -60,7 +83,7 @@ namespace couh
                 // show.ini出力用に整形
                 foreach (var subkey in ShowDic)
                 {
-                    showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+                    showList_OutPut.Add(subkey.Value.keyName + sep_str + subkey.Value.displayName + sep_str + subkey.Value.bit);
                 }
 
                 StreamWriter sw = new StreamWriter( show_ini, false, Encoding.GetEncoding(Constants.SJIS));
@@ -75,8 +98,11 @@ namespace couh
             // 表示情報をリストに表示
             foreach (var line in ShowDic)
             {
-                lstShow.Items.Add(line.Value.Item2);
+                dgvShow.Rows.Add(new string[]{line.Value.displayName, line.Value.update});
             }
+
+            //dataGridView1.DataSource = Test;
+            dgvShow.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
 
             // 非表示プログラム一覧ファイルが存在するか
             if (File.Exists(hide_ini))
@@ -89,7 +115,7 @@ namespace couh
                 {
                     // セパレータでサブキーと値の名前に分割し、非表示辞書に設定
                     splitted = readLine.Split(separator);
-                    hideDic.Add( index, new Tuple<string, string, int>(splitted[0], splitted[1], int.Parse(splitted[2]) ) );
+                    hideDic.Add( index, new regElement(splitted[0], splitted[1], int.Parse(splitted[2]), splitted[3]) );
                     preHideKey.Add(splitted[0], int.Parse(splitted[2]));
                     index++;
                 }
@@ -97,11 +123,13 @@ namespace couh
                 sr.Close();
 
                 // 非表示リストを表示
-                foreach(Tuple<string, string, int> name in hideDic.Values)
+                foreach(regElement name in hideDic.Values)
                 {
-                    lstHide.Items.Add(name.Item2);
+                    dgvHide.Rows.Add(new string[]{name.displayName, name.update});
                 }
             }
+            dgvShow.CurrentCell = null;
+            dgvHide.CurrentCell = null;
         }
 
         /// <summary>
@@ -111,34 +139,53 @@ namespace couh
         /// <param name="e"></param>
         private void btnToHide_Click(object sender, EventArgs e)
         {
+            if(dgvShow.CurrentCell == null) return;
+
             // 非表示リストに追加する項目数
-            int selectNum = lstShow.SelectedIndices.Count;
+            //int selectNum = lstShow.SelectedIndices.Count;
+            int selectNum = dgvShow.SelectedRows.Count;
             // 既に非表示リストに入っている項目数
             int hCount = hideDic.Count;
 
-            for (int i = 0; i < selectNum; i++)
+            foreach (DataGridViewRow selectCell in dgvShow.SelectedRows)
             {
-                // 非表示辞書に後ろから追加
-                hideDic.Add(hCount + i,
-                    new Tuple<string, string, int> (ShowDic[lstShow.SelectedIndices[i]].Item1,
-                                                    ShowDic[lstShow.SelectedIndices[i]].Item2, 
-                                                    ShowDic[lstShow.SelectedIndices[i]].Item3));
-                // 表示辞書から削除
-                ShowDic.Remove(lstShow.SelectedIndices[i]);
-            }
-            // インデックスを振り直し
-            fc.RefreshDicIndex(ref ShowDic);
-            fc.RefreshDicIndex(ref hideDic);
+                hideDic.Add(hCount++,
+                    new regElement (ShowDic[selectCell.Index].keyName,
+                                                    ShowDic[selectCell.Index].displayName, 
+                                                    ShowDic[selectCell.Index].bit,
+                                                    ShowDic[selectCell.Index].update));
+                ShowDic.Remove(selectCell.Index);
 
-            for (int i = 0; i < selectNum; i++)
-            {
                 // （非）表示リストの更新
-                lstHide.Items.Add(lstShow.SelectedItems[0]);
-                lstShow.Items.RemoveAt(lstShow.SelectedIndices[0]);
+                //lstHide.Items.Add(lstShow.SelectedItems[0]);
+                //lstShow.Items.RemoveAt(lstShow.SelectedIndices[0]);
 
-                lstHide.Sorted = true;
-                lstShow.Sorted = true;
+                //lstHide.Sorted = true;
+                //lstShow.Sorted = true;
+
+                dgvHide.Rows.Add(dgvShow.Rows[selectCell.Index].Cells[0].Value.ToString(),
+                    dgvShow.Rows[selectCell.Index].Cells[1].Value.ToString());
+                dgvShow.Rows.Remove(selectCell);
             }
+            fc.RefreshDicIndex(ref ShowDic, 0);
+            fc.RefreshDicIndex(ref hideDic, 0);
+
+            DataGridViewColumn sortColumn = dgvHide.CurrentCell.OwningColumn;
+
+            //並び替えの方向（昇順か降順か）を決める
+            if (dgvHide.SortedColumn != null &&
+                dgvHide.SortedColumn.Equals(sortColumn))
+            {
+                sortDirection =
+                    dgvHide.SortOrder == SortOrder.Ascending ?
+                    ListSortDirection.Ascending : ListSortDirection.Descending;
+            }
+
+            //並び替えを行う
+            dgvHide.Sort(sortColumn, sortDirection);
+
+            dgvShow.CurrentCell = null;
+            dgvHide.CurrentCell = null;
         }
         /// <summary>
         /// 表示リストに追加
@@ -147,28 +194,45 @@ namespace couh
         /// <param name="e"></param>
         private void btnToShow_Click(object sender, EventArgs e)
         {
-            int selectNum = lstHide.SelectedIndices.Count;
+            if(dgvHide.CurrentCell == null) return;
+
+            // 非表示リストに追加する項目数
+            int selectNum = dgvShow.SelectedRows.Count;
+            // 既に非表示リストに入っている項目数
             int sCount = ShowDic.Count;
 
-            for (int i = 0; i < selectNum; i++)
+            foreach (DataGridViewRow selectCell in dgvHide.SelectedRows)
             {
-                ShowDic.Add(sCount + i, new Tuple<string, string, int>(hideDic[lstHide.SelectedIndices[i]].Item1,
-                    hideDic[lstHide.SelectedIndices[i]].Item2, hideDic[lstHide.SelectedIndices[i]].Item3));
+                // （非）表示リストの更新
+                ShowDic.Add(sCount++,
+                    new regElement (hideDic[selectCell.Index].keyName,
+                                                    hideDic[selectCell.Index].displayName, 
+                                                    hideDic[selectCell.Index].bit,
+                                                    hideDic[selectCell.Index].update));
+                hideDic.Remove(selectCell.Index);
 
-                hideDic.Remove(lstHide.SelectedIndices[i]);
+                dgvShow.Rows.Add(dgvHide.Rows[selectCell.Index].Cells[0].Value.ToString(),
+                    dgvHide.Rows[selectCell.Index].Cells[1].Value.ToString());
+                dgvHide.Rows.Remove(selectCell);
             }
-
-            fc.RefreshDicIndex(ref ShowDic);
-            fc.RefreshDicIndex(ref hideDic);
+            fc.RefreshDicIndex(ref ShowDic, 0);
+            fc.RefreshDicIndex(ref hideDic, 0);
             
-            for (int i = 0; i < selectNum; i++)
-            {
-                lstShow.Items.Add(lstHide.SelectedItems[0]);
-                lstHide.Items.RemoveAt(lstHide.SelectedIndices[0]);
+            DataGridViewColumn sortColumn = dgvShow.CurrentCell.OwningColumn;
 
-                lstShow.Sorted = true;
-                lstHide.Sorted = true;
+            //並び替えの方向（昇順か降順か）を決める
+            if (dgvShow.SortedColumn != null &&
+                dgvShow.SortedColumn.Equals(sortColumn))
+            {
+                sortDirection =
+                    dgvShow.SortOrder == SortOrder.Ascending ?
+                    ListSortDirection.Ascending : ListSortDirection.Descending;
             }
+
+            //並び替えを行う
+            dgvShow.Sort(sortColumn, sortDirection);
+            dgvShow.CurrentCell = null;
+            dgvHide.CurrentCell = null;
         }
 
         /// <summary>
@@ -195,16 +259,16 @@ namespace couh
             // ハイド情報のそれぞれに操作情報をつけてapplyに設定
             foreach (var hide in hideDic.Values)
             {
-                if (preHideKey.ContainsKey(hide.Item1))
+                if (preHideKey.ContainsKey(hide.keyName))
                 {
                     // 起動時 or apply後のハイド情報に今のハイド情報があれば操作しない 
-                    applyDic.Add(hide.Item1, new Tuple<int, int>((int)Constants.operation.KEEP, hide.Item3));
-                    preHideKey.Remove(hide.Item1);
+                    applyDic.Add(hide.keyName, new Tuple<int, int>((int)Constants.operation.KEEP, hide.bit));
+                    preHideKey.Remove(hide.keyName);
                 }
                 else
                 {
                     // なければ新参なので非表示する
-                    applyDic.Add(hide.Item1, new Tuple<int, int>((int)Constants.operation.HIDE, hide.Item3));
+                    applyDic.Add(hide.keyName, new Tuple<int, int>((int)Constants.operation.HIDE, hide.bit));
                 }
             }
 
@@ -265,7 +329,7 @@ namespace couh
 
             foreach (var pre in hideDic)
             {
-                preHideKey.Add(pre.Value.Item1, pre.Value.Item3);
+                preHideKey.Add(pre.Value.keyName, pre.Value.bit);
             }
 
             applyDic.Clear();
@@ -276,13 +340,13 @@ namespace couh
             // 非表示プログラム帳票出力用リスト作成
             foreach (var subkey in hideDic)
             {
-                hideList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+                hideList_OutPut.Add(subkey.Value.keyName + sep_str + subkey.Value.displayName + sep_str + subkey.Value.bit);
             }
 
             // 表示プログラム帳票出力用リスト作成
             foreach (var subkey in ShowDic)
             {
-                showList_OutPut.Add(subkey.Value.Item1 + sep_str + subkey.Value.Item2 + sep_str + subkey.Value.Item3);
+                showList_OutPut.Add(subkey.Value.keyName + sep_str + subkey.Value.displayName + sep_str + subkey.Value.bit);
             }
 
             // 非表示帳票出力
@@ -312,13 +376,13 @@ namespace couh
             this.Close();
         }
 
-        private void lstShow_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void dgvShow_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             try
             {
-                if (lstShow.SelectedIndex != -1)
+                if (dgvShow.CurrentRow.Index != -1 && e.RowIndex >= 0)
                 {
-                    MessageBox.Show("Key: " + ShowDic[lstShow.SelectedIndex].Item1);
+                    MessageBox.Show("Key: " + ShowDic[dgvShow.CurrentRow.Index].keyName);
                 }
                 
             }
@@ -326,23 +390,21 @@ namespace couh
             {
                 MessageBox.Show(ex.Message);
             }
-            
         }
 
-        private void lstHide_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void dgvShow_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
-            try
-            {
-                if (lstHide.SelectedIndex != -1)
-                {
-                    MessageBox.Show("Key: " + hideDic[lstHide.SelectedIndex].Item1);
-                }
-                
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+            //MessageBox.Show(dgvShow.SortOrder.ToString());
+            MessageBox.Show(e.ColumnIndex.ToString());
+
+            //switch (e.ColumnIndex)
+            //{
+            //    case Constants.columnName:
+            //        if (dgvShow.SortOrder == SortOrder.Ascending)
+            //        {
+
+            //        }
+            //}
         }
     }
 }

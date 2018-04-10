@@ -8,8 +8,12 @@ using System.IO;
 using System.Security;
 using System.Windows.Forms;
 
+using System.Runtime.InteropServices;
+
 namespace couh
 {
+
+
     static class Constants
     {
         public const string baseKeyName_x64 = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
@@ -18,10 +22,14 @@ namespace couh
         public const string SJIS = "Shift_JIS";
         public const int x64 = 0;
         public const int x86 = 1;
+        public const int columnName = 0;
+        public const int columnDate = 1;
         public static int g_Index = 0;
 
-        public static List<string> searchValueList = new List<string>(){ "DisplayName", "ReleaseType", "SystemComponent" };
+        public static List<string> searchValueList = new List<string>(){ "DisplayName", "ReleaseType", "SystemComponent", "InstallDate"};
         public static List<string> ignoreList = new List<string>(){ "Hotfix", "Update", "ServicePack", "Security Update" };
+        
+        public static Dictionary<string, long> listLastUpdate = new Dictionary<string,long>();
 
         public enum operation
         {
@@ -31,15 +39,36 @@ namespace couh
         }
     }
 
+    public class regElement
+    {
+        public string keyName { get; set; }
+        public string displayName { get; set; }
+        public int bit { get; set; }
+        public string update { get; set; }
+
+        public regElement(string keyname, string displayname, int bit, string update)
+        {
+            this.keyName = keyname;
+            this.displayName = displayname;
+            this.bit = bit;
+            this.update = update;
+        }
+
+    }
+
     class func //:Form
     {
-        public Dictionary<int, Tuple<string, string, int>> GetUninstallList(int bit)
+        // FILETIME構造体は 1601 年 1 月 1 日から 100 ナノ秒間隔の数を表す 64 ビット値。
+        public static DateTime FILETIME_SECOND = new DateTime(1601, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+        public Dictionary<int, regElement> GetUninstallList(int bit)
         {
             List<string> regPath = new List<string>();
-            var regList = new Dictionary<int, Tuple<string, string, int>>();
+            var regList = new Dictionary<int, regElement>();
             string displayname;
             string releasetype;
             int? syscom;
+            string installDate;
 
             string keyName = (bit == Constants.x64) ? Constants.baseKeyName_x64 : Constants.baseKeyName_x86;
 
@@ -62,28 +91,60 @@ namespace couh
                 displayname = (string)regValueName.GetValue(Constants.searchValueList[0]);
                 releasetype = (string)regValueName.GetValue(Constants.searchValueList[1]);
                 syscom = (int?)regValueName.GetValue(Constants.searchValueList[2]);
+                installDate = (string)regValueName.GetValue(Constants.searchValueList[3]);
 
                 if ( ( displayname != null ) &&
                      ( syscom != 1 ) &&
                      !Constants.ignoreList.Contains( releasetype ) )
                 {
-                    regList.Add(Constants.g_Index, new Tuple<string, string, int>( aryKeyName[i], displayname, bit ) );
+
+                    if (installDate == null || installDate == "")
+                    {
+                        installDate = FILETIME_SECOND.
+                        AddSeconds(Constants.listLastUpdate[aryKeyName[i]]/10000000).
+                            ToLocalTime().ToString("d");
+                    }
+                    else
+                    {
+                        installDate = DateTime.ParseExact(installDate,"yyyyMMdd",null).ToString("d");
+                    }
+
+                    regList.Add(Constants.g_Index, new regElement( aryKeyName[i], displayname, bit, installDate ) );
                     Constants.g_Index++;
                 }
             }
             return regList;
         }
 
-        public void RefreshDicIndex(ref Dictionary<int, Tuple<string, string, int>> refDic)
+        public void RefreshDicIndex(ref Dictionary<int, regElement> refDic, int sortObjNum)
         {
-            var refDic_Sorted = refDic.OrderBy(x => x.Value.Item2);
 
-            var tmp = new Dictionary<int, Tuple<string, string, int>>();
+            Dictionary<int,regElement> refDic_Sorted = new Dictionary<int,regElement>();
+
+            switch (sortObjNum)
+            {
+                case Constants.columnName :
+                    refDic_Sorted = refDic.OrderBy(x => x.Value.displayName).ToDictionary(s => s.Key, s => s.Value);
+                    break;
+
+                case Constants.columnDate :
+                    refDic_Sorted = refDic.OrderBy(x => x.Value.update).ToDictionary(s => s.Key, s => s.Value);
+                    break;
+
+                default:
+                    break;
+            }
+            
+
+            var tmp = new Dictionary<int, regElement>();
             int index = 0;
 
-            foreach(KeyValuePair<int, Tuple<string, string, int>> element in refDic_Sorted)
+            foreach(KeyValuePair<int, regElement> element in refDic_Sorted)
             {
-                tmp.Add(index, new Tuple<string, string, int>(element.Value.Item1, element.Value.Item2, element.Value.Item3));
+                tmp.Add(index, new regElement(element.Value.keyName, 
+                    element.Value.displayName, 
+                    element.Value.bit, 
+                    element.Value.update));
                 index++;
             }
             refDic = tmp;
