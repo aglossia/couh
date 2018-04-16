@@ -12,8 +12,6 @@ using System.Runtime.InteropServices;
 
 namespace couh
 {
-
-
     static class Constants
     {
         public const string baseKeyName_x64 = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
@@ -25,6 +23,13 @@ namespace couh
         public const int columnName = 0;
         public const int columnDate = 1;
         public static int g_Index = 0;
+
+        public static byte[] sortColumnBit = {0x1, 0x2};
+        public const byte sortColumnName = 0x1;
+        public const byte sortColumnDate = 0x2;
+        public const byte sortDescending = 0x80; // ascending:8bit目off,descending:8bit目on
+        public const byte sortAscending = 0x0;
+        public const byte sortMask = sortDescending | sortColumnName | sortColumnDate;
 
         public static List<string> searchValueList = new List<string>(){ "DisplayName", "ReleaseType", "SystemComponent", "InstallDate"};
         public static List<string> ignoreList = new List<string>(){ "Hotfix", "Update", "ServicePack", "Security Update" };
@@ -116,19 +121,35 @@ namespace couh
             return regList;
         }
 
-        public void RefreshDicIndex(ref Dictionary<int, regElement> refDic, int sortObjNum)
+        public void RefreshDicIndex(ref Dictionary<int, regElement> refDic, byte sortObjNum)
         {
 
             Dictionary<int,regElement> refDic_Sorted = new Dictionary<int,regElement>();
 
-            switch (sortObjNum)
+            Console.WriteLine(Convert.ToString(sortObjNum & Constants.sortMask,2).PadLeft(8,'0'));
+            Console.WriteLine(Convert.ToString(Constants.sortAscending | Constants.columnName,2).PadLeft(8,'0'));
+            Console.WriteLine(Convert.ToString(Constants.sortAscending | Constants.columnDate,2).PadLeft(8,'0'));
+            Console.WriteLine(Convert.ToString(Constants.sortDescending | Constants.columnName,2).PadLeft(8,'0'));
+            Console.WriteLine(Convert.ToString(Constants.sortDescending | Constants.columnDate,2).PadLeft(8,'0'));
+
+
+
+            switch (sortObjNum & Constants.sortMask)
             {
-                case Constants.columnName :
+                case Constants.sortAscending | Constants.sortColumnName :
                     refDic_Sorted = refDic.OrderBy(x => x.Value.displayName).ToDictionary(s => s.Key, s => s.Value);
                     break;
 
-                case Constants.columnDate :
+                case Constants.sortAscending | Constants.sortColumnDate :
                     refDic_Sorted = refDic.OrderBy(x => x.Value.update).ToDictionary(s => s.Key, s => s.Value);
+                    break;
+
+                case Constants.sortDescending | Constants.sortColumnName :
+                    refDic_Sorted = refDic.OrderByDescending(x => x.Value.displayName).ToDictionary(s => s.Key, s => s.Value);
+                    break;
+
+                case Constants.sortDescending | Constants.sortColumnDate :
+                    refDic_Sorted = refDic.OrderByDescending(x => x.Value.update).ToDictionary(s => s.Key, s => s.Value);
                     break;
 
                 default:

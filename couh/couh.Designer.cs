@@ -34,12 +34,12 @@
             this.btnApply = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
             this.dgvShow = new System.Windows.Forms.DataGridView();
-            this.columnShowName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.columnShowDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dgvHide = new System.Windows.Forms.DataGridView();
             this.columnHideName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.columnHideDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.labelVer = new System.Windows.Forms.Label();
+            this.columnShowName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.columnShowDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvShow)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHide)).BeginInit();
             this.SuspendLayout();
@@ -110,24 +110,14 @@
             this.dgvShow.TabIndex = 7;
             this.dgvShow.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvShow_CellDoubleClick);
             this.dgvShow.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvShow_ColumnHeaderMouseClick);
-            // 
-            // columnShowName
-            // 
-            this.columnShowName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.columnShowName.HeaderText = "Name";
-            this.columnShowName.Name = "columnShowName";
-            this.columnShowName.ReadOnly = true;
-            this.columnShowName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // columnShowDate
-            // 
-            this.columnShowDate.HeaderText = "Date";
-            this.columnShowDate.Name = "columnShowDate";
-            this.columnShowDate.ReadOnly = true;
+            this.dgvShow.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.dgvShow_SortCompare);
             // 
             // dgvHide
             // 
             this.dgvHide.AllowUserToAddRows = false;
+            this.dgvHide.AllowUserToDeleteRows = false;
+            this.dgvHide.AllowUserToResizeColumns = false;
+            this.dgvHide.AllowUserToResizeRows = false;
             this.dgvHide.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvHide.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.columnHideName,
@@ -137,10 +127,13 @@
             this.dgvHide.ReadOnly = true;
             this.dgvHide.RowHeadersVisible = false;
             this.dgvHide.RowHeadersWidth = 25;
+            this.dgvHide.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dgvHide.RowTemplate.Height = 21;
             this.dgvHide.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvHide.Size = new System.Drawing.Size(731, 118);
             this.dgvHide.TabIndex = 8;
+            this.dgvHide.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvHide_CellDoubleClick);
+            this.dgvHide.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvHide_ColumnHeaderMouseClick);
             // 
             // columnHideName
             // 
@@ -163,6 +156,21 @@
             this.labelVer.Size = new System.Drawing.Size(47, 12);
             this.labelVer.TabIndex = 9;
             this.labelVer.Text = "Ver -.-";
+            // 
+            // columnShowName
+            // 
+            this.columnShowName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.columnShowName.HeaderText = "Name";
+            this.columnShowName.Name = "columnShowName";
+            this.columnShowName.ReadOnly = true;
+            this.columnShowName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
+            // 
+            // columnShowDate
+            // 
+            this.columnShowDate.HeaderText = "Date";
+            this.columnShowDate.Name = "columnShowDate";
+            this.columnShowDate.ReadOnly = true;
+            this.columnShowDate.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
             // 
             // couh
             // 
